@@ -10,10 +10,10 @@ function university_files()
   wp_enqueue_style('font-awesome', '//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css');
   wp_enqueue_style('university_main_styles', get_theme_file_uri('/build/style-index.css'));
   wp_enqueue_style('university_extra_styles', get_theme_file_uri('/build/index.css'));
-  wp_localize_script('main-university-js','universityData',array(
+  wp_localize_script('main-university-js', 'universityData', array(
     'root_url' => get_site_url(),
     'nonce' => wp_create_nonce('wp_rest')
-  ));//wp_localize_script used to make PHP data available to JavaScript code.
+  )); //wp_localize_script used to make PHP data available to JavaScript code.
 }
 
 add_action('wp_enqueue_scripts', 'university_files');
@@ -21,10 +21,10 @@ add_action('wp_enqueue_scripts', 'university_files');
 function university_features()
 {
   add_theme_support('title-tag');
-  add_theme_support( 'post-thumbnails' );
+  add_theme_support('post-thumbnails');
   add_image_size('professorLandscape', 400, 250, true);
   add_image_size('professorPortrait', 450, 600, true);
-  add_image_size('page_banner', 1500, 350, true);  
+  add_image_size('page_banner', 1500, 350, true);
   add_theme_support('editor-styles');
   add_editor_style(array('https://fonts.googleapis.com/css?family=Roboto+Condensed:300,300i,400,400i,700,700i|Roboto:100,300,400,400i,700,700i', 'build/style-index.css', 'build/index.css'));
 }
@@ -38,18 +38,19 @@ function university_adjust_queries($query)
     $query->set('meta_key', 'event_date');
     $query->set('orderby', 'meta_value_num');
     $query->set('order', 'ASC');
-    $query->set('meta_query', array(
+    $query->set(
+      'meta_query',
       array(
-        'key' => 'event_date',
-        'compare' => '>=',
-        'value' => $today,
-        'type' => 'numeric'
+        array(
+          'key' => 'event_date',
+          'compare' => '>=',
+          'value' => $today,
+          'type' => 'numeric'
+        )
       )
-    )
     );
-
   }
-  if (!is_admin() AND is_post_type_archive('program') AND $query->is_main_query()) {
+  if (!is_admin() and is_post_type_archive('program') and $query->is_main_query()) {
     $query->set('orderby', 'title');
     $query->set('order', 'ASC');
     $query->set('posts_per_page', -1);
@@ -61,14 +62,15 @@ add_action('pre_get_posts', 'university_adjust_queries');
 
 
 //Adding custom field to wp rest api
-function university_custom_rest(){
-  register_rest_field('post','authorName', array(
-  'get_callback'=> function(){
-    return get_the_author();
+function university_custom_rest()
+{
+  register_rest_field('post', 'authorName', array(
+    'get_callback' => function () {
+      return get_the_author();
     }
   ));
   register_rest_field('note', 'userNoteCount', array(
-    'get_callback' => function() {
+    'get_callback' => function () {
       return count_user_posts(get_current_user_id(), 'note');
     }
   ));
@@ -76,31 +78,35 @@ function university_custom_rest(){
 add_action('rest_api_init', 'university_custom_rest');
 
 //Redirect subsciber user to home page
-add_action('admin_init','redirectSubscriber');
-function redirectSubscriber (){
+add_action('admin_init', 'redirectSubscriber');
+function redirectSubscriber()
+{
   $currentUser = wp_get_current_user();
-  if(count($currentUser->roles)==1 AND $currentUser->roles[0] == 'subscriber'){
+  if (count($currentUser->roles) == 1 and $currentUser->roles[0] == 'subscriber') {
     wp_redirect(site_url('/'));
     exit;
   }
 }
 //hide admin bar for subscribers
-add_action('wp_loaded','hideAdminbar');
-function hideAdminbar(){
+add_action('wp_loaded', 'hideAdminbar');
+function hideAdminbar()
+{
   $currentUser = wp_get_current_user();
-  if(count($currentUser->roles)==1 AND $currentUser->roles[0] == 'subscriber'){
+  if (count($currentUser->roles) == 1 and $currentUser->roles[0] == 'subscriber') {
     show_admin_bar(false);
   }
 }
 
 //custom login page
 add_filter('login_headerurl', 'setLoginHeaderUrl');
-function setLoginHeaderUrl(){
+function setLoginHeaderUrl()
+{
   return esc_url(site_url('/'));
 }
 
 add_action('login_enqueue_scripts', 'setLoginCSS');
-function setLoginCSS() {
+function setLoginCSS()
+{
   wp_enqueue_style('custom-google-fonts', '//fonts.googleapis.com/css?family=Roboto+Condensed:300,300i,400,400i,700,700i|Roboto:100,300,400,400i,700,700i');
   wp_enqueue_style('font-awesome', '//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css');
   wp_enqueue_style('university_main_styles', get_theme_file_uri('/build/style-index.css'));
@@ -109,15 +115,17 @@ function setLoginCSS() {
 
 add_filter('login_headertitle', 'setLoginTitle');
 
-function setLoginTitle() {
+function setLoginTitle()
+{
   return get_bloginfo('name');
 }
 
 // Adding conditions while creating note post
-add_filter('wp_insert_post_data', 'makeNotePrivate',10,2);
-function makeNotePrivate($data, $postarr) {
+add_filter('wp_insert_post_data', 'makeNotePrivate', 10, 2);
+function makeNotePrivate($data, $postarr)
+{
   if ($data['post_type'] == 'note') {
-    if(count_user_posts(get_current_user_id(), 'note') > 4 AND !$postarr['ID']) {
+    if (count_user_posts(get_current_user_id(), 'note') > 4 and !$postarr['ID']) {
       die("You have reached your note limit. Delete existing note to add a new note.");
     }
 
@@ -125,26 +133,105 @@ function makeNotePrivate($data, $postarr) {
     $data['post_title'] = sanitize_text_field($data['post_title']);
   }
 
-  if($data['post_type'] == 'note' AND $data['post_status'] != 'trash') {
+  if ($data['post_type'] == 'note' and $data['post_status'] != 'trash') {
     $data['post_status'] = "private";
   }
   return $data;
 }
 
 
-class JSXBlock {
+class jsx_block
+{
+  function __construct($name, $renderCallback = null, $data = null)
+  {
+    $this->name = $name;
+    $this->data = $data;
+    $this->renderCallback = $renderCallback;
+    add_action('init', [$this, 'on_init']);
+  }
+
+  function set_render_callback($attributes, $content)
+  {
+    ob_start();
+    require get_theme_file_path("/our-blocks/{$this->name}.php");
+    return ob_get_clean();
+  }
+
+
+  function on_init()
+  {
+    wp_register_script($this->name, get_stylesheet_directory_uri() . "/build/{$this->name}.js", array('wp-blocks', 'wp-editor'));
+
+    if ($this->data) {
+      wp_localize_script($this->name, $this->name, $this->data);
+    }
+
+    $args = array(
+      'editor_script' => $this->name
+    );
+
+    if ($this->renderCallback) {
+      $args['render_callback'] = [$this, 'set_render_callback'];
+    }
+
+    register_block_type("ourblocktheme/{$this->name}", $args);
+  }
+}
+
+
+new jsx_block('banner', true, ['fallbackimage' => get_theme_file_uri('/images/library-hero.jpg')]);
+new jsx_block('genericheading');
+new jsx_block('genericbutton');
+new jsx_block('slideshow', true);
+new jsx_block('slide', true, ['themeimagepath' => get_theme_file_uri('/images/')]);
+
+class placeholder_block {
   function __construct($name) {
     $this->name = $name;
     add_action('init', [$this, 'on_init']);
   }
 
+  function set_render_callback($attributes, $content) {
+    ob_start();
+    require get_theme_file_path("/our-blocks/{$this->name}.php");
+    return ob_get_clean();
+  }
+
   function on_init() {
-    wp_register_script($this->name, get_stylesheet_directory_uri() . "/build/{$this->name}.js", array('wp-blocks', 'wp-editor'));
+    wp_register_script($this->name, get_stylesheet_directory_uri() . "/our-blocks/{$this->name}.js", array('wp-blocks', 'wp-editor'));
+    
     register_block_type("ourblocktheme/{$this->name}", array(
-      'editor_script' => $this->name
+      'editor_script' => $this->name,
+      'render_callback' => [$this, 'set_render_callback']
     ));
   }
 }
 
-new JSXBlock('banner');
-new JSXBlock('genericheading');
+new placeholder_block("eventsandblogs");
+new placeholder_block("header");
+new placeholder_block("footer");
+new placeholder_block("singlepost");
+new placeholder_block("page");
+new placeholder_block("blogindex");
+new placeholder_block("programarchive");
+new placeholder_block("singleprogram");
+new placeholder_block("singleprofessor");
+new placeholder_block("mynotes");
+new placeholder_block("archiveevent");
+new placeholder_block("archive");
+new placeholder_block("pastevents");
+new placeholder_block("search");
+new placeholder_block("searchresults");
+new placeholder_block("singleevent");
+
+// function allowed_blocks($allowed_block_types, $editor_context) {
+//   // Show all blocks on page/post editor screen
+//   if (!empty($editor_context->post)) {
+//     return $allowed_block_types;
+//   }
+
+//   // Show only these blocks on the Full site editor screen
+//   return array('ourblocktheme/header', 'ourblocktheme/footer');
+// }
+
+// add_filter('allowed_block_types_all','allowed_blocks',10,2);

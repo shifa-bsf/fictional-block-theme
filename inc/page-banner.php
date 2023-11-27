@@ -12,7 +12,7 @@ function page_banner($args = NULL) {
 
   if (!isset($args['photo'])) {
     if (get_field('page_banner_background_image') AND !is_home() ) {
-      $args['photo'] = get_field('page_banner_background_image')['sizes']['pageBanner'];
+      $args['photo'] = get_field('page_banner_background_image')['sizes']['page_banner'];
     } else {
       $args['photo'] = get_theme_file_uri('/images/ocean.jpg');
     }
